@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "safeshift"
+version = "0.1.0"
+description = "Open, vendor-neutral shift-left integration-risk prediction for automotive software architectures"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [{name = "Omar Abdelmaksoud"}]
+keywords = ["automotive", "ADAS", "software-defined-vehicle", "shift-left", "validation", "machine-learning", "ASPICE", "ISO-26262"]
+dependencies = ["networkx>=3.0", "numpy>=1.23", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+ml = ["scikit-learn>=1.1"]
+dev = ["pytest>=7.0", "scikit-learn>=1.1", "matplotlib>=3.5"]
+
+[project.scripts]
+safeshift = "safeshift.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

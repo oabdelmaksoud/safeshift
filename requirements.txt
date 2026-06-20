@@ -1,0 +1,4 @@
+networkx>=3.0
+numpy>=1.23
+PyYAML>=6.0
+scikit-learn>=1.1   # optional: enables the learned model (falls back to heuristic if absent)

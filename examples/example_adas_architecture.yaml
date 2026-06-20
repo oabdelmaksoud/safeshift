@@ -1,0 +1,29 @@
+name: "Reference ADAS / E-E Architecture (illustrative)"
+# Illustrative, synthetic architecture of a camera+radar ADAS domain with a central
+# domain controller, gateway, and actuation. Values are representative, not from any
+# real or proprietary program.
+components:
+  - {id: cam_front,   name: "Front Camera",            kind: sensor,            supplier: SupplierA, asil: B, maturity: 0.7}
+  - {id: radar_front, name: "Front Radar",             kind: sensor,            supplier: SupplierB, asil: B, maturity: 0.6}
+  - {id: radar_corner,name: "Corner Radar x4",         kind: sensor,            supplier: SupplierB, asil: B, maturity: 0.5}
+  - {id: vpm,         name: "Video Processing Module",  kind: ecu,               supplier: SupplierA, asil: C, maturity: 0.5}
+  - {id: fusion,      name: "Sensor Fusion / Perception",kind: software_module,  supplier: Integrator,asil: D, maturity: 0.3}
+  - {id: adc,         name: "ADAS Domain Controller",   kind: domain_controller, supplier: Integrator,asil: D, maturity: 0.4}
+  - {id: pam,         name: "Park Assist Module",       kind: software_module,   supplier: SupplierA, asil: B, maturity: 0.6}
+  - {id: gw,          name: "Central Gateway",          kind: gateway,           supplier: SupplierC, asil: B, maturity: 0.8}
+  - {id: brake,       name: "Brake Actuation ECU",      kind: ecu,               supplier: SupplierD, asil: D, maturity: 0.8}
+  - {id: steer,       name: "Steering ECU",             kind: ecu,               supplier: SupplierD, asil: D, maturity: 0.8}
+  - {id: hmi,         name: "Driver HMI / Cluster",     kind: ecu,               supplier: SupplierC, asil: A, maturity: 0.7}
+interfaces:
+  - {id: if_cam_vpm,    source: cam_front,   target: vpm,    protocol: Ethernet, signals: 18, safety_related: true,  timing_critical: true}
+  - {id: if_vpm_fusion, source: vpm,         target: fusion, protocol: Ethernet, signals: 24, safety_related: true,  timing_critical: true}
+  - {id: if_rf_fusion,  source: radar_front, target: fusion, protocol: CAN-FD,   signals: 12, safety_related: true,  timing_critical: true}
+  - {id: if_rc_fusion,  source: radar_corner,target: fusion, protocol: CAN-FD,   signals: 16, safety_related: true,  timing_critical: false}
+  - {id: if_fusion_adc, source: fusion,      target: adc,    protocol: Ethernet, signals: 30, safety_related: true,  timing_critical: true}
+  - {id: if_adc_fusion, source: adc,         target: fusion, protocol: Ethernet, signals: 8,  safety_related: true,  timing_critical: true}
+  - {id: if_adc_brake,  source: adc,         target: brake,  protocol: FlexRay,  signals: 10, safety_related: true,  timing_critical: true}
+  - {id: if_adc_steer,  source: adc,         target: steer,  protocol: FlexRay,  signals: 10, safety_related: true,  timing_critical: true}
+  - {id: if_pam_adc,    source: pam,         target: adc,    protocol: CAN,      signals: 6,  safety_related: false, timing_critical: false}
+  - {id: if_adc_gw,     source: adc,         target: gw,     protocol: Ethernet, signals: 20, safety_related: false, timing_critical: false}
+  - {id: if_gw_hmi,     source: gw,          target: hmi,    protocol: CAN,      signals: 14, safety_related: false, timing_critical: false}
+  - {id: if_adc_hmi,    source: adc,         target: hmi,    protocol: CAN,      signals: 9,  safety_related: false, timing_critical: false}

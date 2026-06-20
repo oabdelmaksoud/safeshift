@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "SafeShift: Open Shift-Left Integration-Risk Prediction for Automotive Software Architectures"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Abdelmaksoud
+    given-names: Omar
+version: 0.1.0
+date-released: 2026-06-02
+license: Apache-2.0
+repository-code: "https://github.com/oabdelmaksoud/safeshift"
+url: "https://github.com/oabdelmaksoud/safeshift"
+# doi: 10.5281/zenodo.XXXXXXX   # TODO: paste the Zenodo concept DOI after minting it (see Publication Runbook B1, Part 2). Do NOT file the petition until this is a real, resolvable DOI.
+keywords:
+  - automotive software
+  - software-defined vehicle
+  - shift-left validation
+  - machine learning
+  - ASPICE
