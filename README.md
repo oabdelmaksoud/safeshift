@@ -1,5 +1,9 @@
 # SafeShift
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20780068.svg)](https://doi.org/10.5281/zenodo.20780068)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+
 **Open, vendor-neutral shift-left integration-risk prediction for automotive software architectures.**
 
 Modern vehicles are software-defined: dozens to hundreds of electronic control units and software
@@ -33,7 +37,18 @@ python -m safeshift analyze examples/example_adas_architecture.yaml
 
 # Train the optional ML model on synthetic data, write a report
 python -m safeshift analyze examples/example_adas_architecture.yaml --train --out report.md
+
+# A larger, connected-vehicle / software-defined-vehicle example
+python -m safeshift analyze examples/example_connected_vehicle_architecture.yaml --train --out cv_report.md
 ```
+
+## Worked examples
+Two illustrative, non-proprietary architectures ship in `examples/`:
+- **`example_adas_architecture.yaml`** — a camera+radar ADAS domain (11 components / 12 interfaces).
+- **`example_connected_vehicle_architecture.yaml`** — a software-defined / connected-vehicle
+  architecture (14 components / 19 interfaces) spanning telematics, V2X, OTA update, and
+  infotainment, designed to exercise the externally-reachable attack surface governed by
+  UNECE R155/R156 and ISO/SAE 21434.
 
 ## Example output (abridged)
 ```
@@ -56,6 +71,47 @@ criticality, crossing a supplier boundary, higher-complexity protocols, high sig
 participation in a dependency cycle, high ASIL on an immature component, and structural centrality.
 See [`docs/methodology.md`](docs/methodology.md) and [`docs/schema.md`](docs/schema.md).
 
+## Evaluation
+
+**Core (held-out, independent synthetic ground truth).** Against a *non-linear synthetic ground
+truth distinct from SafeShift's own heuristic* (to avoid circular evaluation), informed models reach
+~0.81 ROC-AUC versus ~0.52 for a random baseline; 5-fold cross-validation is stable at
+0.810 ± 0.006. The transparent heuristic (0.806) is competitive with logistic regression (0.812)
+and a random forest (0.803), supporting the use of the explainable model in safety contexts. An
+ablation shows the safety/ASIL feature group contributes most (ROC-AUC drops 0.158 when removed).
+
+**Extended (v0.2.0).**
+- **Robustness** — the ranking holds across *four independent* ground-truth generators, not a single
+  synthetic target.
+- **Scalability** — a 500-component / 956-interface architecture is analyzed in ~39 ms.
+- **Standards overlap** — on the connected-vehicle example, 10 of the 12 HIGH-risk interfaces (and 8
+  of the top-10 hotspots) lie on the externally-reachable attack surface that UNECE R155/R156 and
+  ISO/SAE 21434 govern — i.e., design-stage integration risk and cybersecurity exposure concentrate
+  on the same interfaces.
+
+Reproduce:
+```bash
+pip install -e ".[dev]"
+python evaluation/run_eval.py        # core: writes evaluation/results.md and figures/
+python evaluation/extended.py all    # extended: robustness, scalability, dependency maps, overlap
+```
+
+See `evaluation/results.md` for full tables (held-out metrics, ablation, noise robustness, feature
+importance). Results are on synthetic data; external validity requires calibration on real labeled
+integration outcomes.
+
+An **expert-validation harness** (`evaluation/expert_study.py`) is also included: it compares
+SafeShift's interface rankings against blinded domain-expert rankings (Spearman, Kendall's W,
+Fleiss' κ, top-k overlap, HIGH-band F1) once expert ratings are collected — a face-validity check
+that is independent of the synthetic evaluation. (The harness ships ready to run; collecting the
+expert ratings is future work.)
+
+## Tests
+```bash
+pip install -e ".[dev]"
+pytest        # unit tests for schema, graph, features, model, and report
+```
+
 ## Scope & honesty
 SafeShift is a **reference implementation and method**, not a certified tool. Risk scores are
 **decision-support indicators** derived from the architecture description and, in learned mode, a
@@ -63,33 +119,23 @@ SafeShift is a **reference implementation and method**, not a certified tool. Ri
 **illustrative, non-proprietary** example data. Real-world use should calibrate the model against
 an organization's own historical integration outcomes (see the evaluation roadmap in the paper).
 
-## Evaluation
-
-An evaluation harness is included (`evaluation/`). Against an *independent*, non-linear synthetic
-ground truth (distinct from SafeShift's own heuristic, to avoid circular evaluation), informed
-models reach ~0.81 ROC-AUC versus ~0.52 for a random baseline; 5-fold cross-validation is stable
-at 0.810 +/- 0.006. The transparent heuristic (0.806) is competitive with logistic regression
-(0.812) and a random forest (0.803), supporting the use of the explainable model in safety
-contexts. An ablation shows the safety/ASIL feature group contributes most (ROC-AUC drops 0.158
-when removed). Reproduce with:
-
-```bash
-pip install -e ".[dev]"
-python evaluation/run_eval.py    # writes evaluation/results.md and figures/
-```
-
-See `evaluation/results.md` for full tables (held-out metrics, ablation, noise robustness,
-feature importance). Results are on synthetic data; external validity requires calibration on
-real labeled integration outcomes.
-
 ## Roadmap
 - ARXML / AUTOSAR import; richer timing and resource models.
 - Calibration against labeled historical outcomes.
 - CI integration and architecture-diff risk deltas.
 - Alignment hooks for ASPICE work products and ISO 26262 / ISO 21434 evidence.
 
+## Citation
+If you use SafeShift, please cite the archived software (the concept DOI resolves to the latest
+version):
+
+> Abdelmaksoud, O. *SafeShift: Open Shift-Left Integration-Risk Prediction for Automotive Software
+> Architectures.* Zenodo. https://doi.org/10.5281/zenodo.20780068
+
+Machine-readable citation metadata is in [`CITATION.cff`](CITATION.cff).
+
 ## License
-Apache-2.0. See [`LICENSE`](LICENSE). Cite via [`CITATION.cff`](CITATION.cff).
+Apache-2.0. See [`LICENSE`](LICENSE).
 
 ## Author
 Created and maintained by Omar Abdelmaksoud.

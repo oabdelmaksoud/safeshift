@@ -10,7 +10,7 @@ date-released: 2026-06-20
 license: Apache-2.0
 repository-code: "https://github.com/oabdelmaksoud/safeshift"
 url: "https://github.com/oabdelmaksoud/safeshift"
-# doi: 10.5281/zenodo.XXXXXXX   # TODO: paste the Zenodo concept DOI after minting it (see Publication Runbook B1, Part 2). Do NOT file the petition until this is a real, resolvable DOI.
+doi: 10.5281/zenodo.20780068
 keywords:
   - automotive software
   - software-defined vehicle
