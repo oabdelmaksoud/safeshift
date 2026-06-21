@@ -1,0 +1,30 @@
+{
+  "rows": [
+    {
+      "components": 20,
+      "interfaces": 33,
+      "median_seconds": 0.0006
+    },
+    {
+      "components": 50,
+      "interfaces": 83,
+      "median_seconds": 0.0013
+    },
+    {
+      "components": 100,
+      "interfaces": 187,
+      "median_seconds": 0.0035
+    },
+    {
+      "components": 200,
+      "interfaces": 366,
+      "median_seconds": 0.0089
+    },
+    {
+      "components": 500,
+      "interfaces": 956,
+      "median_seconds": 0.0394
+    }
+  ],
+  "repeats": 3
+}

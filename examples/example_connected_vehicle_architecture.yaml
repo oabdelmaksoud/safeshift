@@ -1,0 +1,53 @@
+name: "Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative)"
+# Illustrative, synthetic cross-domain SDV architecture spanning external connectivity
+# (telematics, V2X, OTA update, infotainment), a central service gateway, a hardware
+# security module, an ADAS perception/control domain, vehicle-motion/powertrain, and body.
+# It is designed to exercise the externally-reachable attack surface that UNECE R155
+# (cybersecurity) and R156 (software updates) / ISO-SAE 21434 govern, alongside ordinary
+# integration risk. Values are representative, not from any real or proprietary program.
+components:
+  # --- external-facing connectivity (the cyber attack surface) ---
+  - {id: tcu,     name: "Telematics Control Unit (cellular)", kind: ecu,              supplier: SupplierT,  asil: A,  maturity: 0.5}
+  - {id: v2x,     name: "V2X Module (C-V2X)",                 kind: ecu,              supplier: SupplierV,  asil: B,  maturity: 0.4}
+  - {id: ota,     name: "OTA Update Orchestrator",            kind: software_module,  supplier: Integrator, asil: B,  maturity: 0.3}
+  - {id: ivi,     name: "Infotainment Head Unit",             kind: ecu,              supplier: SupplierI,  asil: QM, maturity: 0.6}
+  # --- central gateway + security services ---
+  - {id: cgw,     name: "Central Service Gateway",            kind: gateway,          supplier: Integrator, asil: B,  maturity: 0.5}
+  - {id: hsm,     name: "Hardware Security Module",           kind: ecu,              supplier: SupplierH,  asil: B,  maturity: 0.7}
+  # --- ADAS perception / control domain ---
+  - {id: cam,     name: "Front Camera",                       kind: sensor,           supplier: SupplierA,  asil: B,  maturity: 0.7}
+  - {id: radar,   name: "Front Radar",                        kind: sensor,           supplier: SupplierB,  asil: B,  maturity: 0.6}
+  - {id: fusion,  name: "Sensor Fusion / Perception",         kind: software_module,  supplier: Integrator, asil: D,  maturity: 0.3}
+  - {id: adas_dc, name: "ADAS Domain Controller",             kind: domain_controller,supplier: Integrator, asil: D,  maturity: 0.4}
+  # --- vehicle motion / powertrain / chassis ---
+  - {id: vcu,     name: "Vehicle Control Unit",               kind: domain_controller,supplier: SupplierP,  asil: D,  maturity: 0.5}
+  - {id: brake,   name: "Brake Actuation ECU",                kind: ecu,              supplier: SupplierD,  asil: D,  maturity: 0.8}
+  - {id: steer,   name: "Steering ECU",                       kind: ecu,              supplier: SupplierD,  asil: D,  maturity: 0.8}
+  # --- body ---
+  - {id: bcm,     name: "Body Control Module",                kind: ecu,              supplier: SupplierC,  asil: A,  maturity: 0.7}
+interfaces:
+  # external ingress into the gateway
+  - {id: if_tcu_cgw,    source: tcu,     target: cgw,     protocol: Ethernet, signals: 20, safety_related: false, timing_critical: false}
+  - {id: if_v2x_cgw,    source: v2x,     target: cgw,     protocol: Ethernet, signals: 16, safety_related: true,  timing_critical: true}
+  - {id: if_ota_cgw,    source: ota,     target: cgw,     protocol: Ethernet, signals: 12, safety_related: false, timing_critical: false}
+  - {id: if_ivi_cgw,    source: ivi,     target: cgw,     protocol: Ethernet, signals: 22, safety_related: false, timing_critical: false}
+  # gateway distribution into vehicle domains
+  - {id: if_cgw_adas,   source: cgw,     target: adas_dc, protocol: Ethernet, signals: 18, safety_related: true,  timing_critical: true}
+  - {id: if_cgw_vcu,    source: cgw,     target: vcu,     protocol: CAN-FD,   signals: 14, safety_related: true,  timing_critical: true}
+  - {id: if_cgw_bcm,    source: cgw,     target: bcm,     protocol: CAN,      signals: 10, safety_related: false, timing_critical: false}
+  - {id: if_cgw_ivi,    source: cgw,     target: ivi,     protocol: Ethernet, signals: 20, safety_related: false, timing_critical: false}
+  # OTA software-update paths reaching safety domains (R156 surface)
+  - {id: if_ota_vcu,    source: ota,     target: vcu,     protocol: CAN-FD,   signals: 8,  safety_related: true,  timing_critical: false}
+  - {id: if_ota_adas,   source: ota,     target: adas_dc, protocol: Ethernet, signals: 10, safety_related: true,  timing_critical: false}
+  # hardware-security-module services
+  - {id: if_hsm_cgw,    source: hsm,     target: cgw,     protocol: internal, signals: 4,  safety_related: false, timing_critical: true}
+  - {id: if_hsm_ota,    source: hsm,     target: ota,     protocol: internal, signals: 4,  safety_related: false, timing_critical: false}
+  # ADAS perception pipeline (fusion <-> adas_dc forms a dependency cycle)
+  - {id: if_cam_fusion, source: cam,     target: fusion,  protocol: Ethernet, signals: 24, safety_related: true,  timing_critical: true}
+  - {id: if_radar_fusion,source: radar,  target: fusion,  protocol: CAN-FD,   signals: 12, safety_related: true,  timing_critical: true}
+  - {id: if_fusion_adas,source: fusion,  target: adas_dc, protocol: Ethernet, signals: 30, safety_related: true,  timing_critical: true}
+  - {id: if_adas_fusion,source: adas_dc, target: fusion,  protocol: Ethernet, signals: 8,  safety_related: true,  timing_critical: true}
+  # actuation
+  - {id: if_adas_brake, source: adas_dc, target: brake,   protocol: FlexRay,  signals: 10, safety_related: true,  timing_critical: true}
+  - {id: if_adas_steer, source: adas_dc, target: steer,   protocol: FlexRay,  signals: 10, safety_related: true,  timing_critical: true}
+  - {id: if_vcu_brake,  source: vcu,     target: brake,   protocol: CAN-FD,   signals: 8,  safety_related: true,  timing_critical: true}

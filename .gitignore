@@ -6,3 +6,5 @@ build/
 dist/
 .venv/
 report.md
+
+.DS_Store

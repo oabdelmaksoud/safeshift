@@ -1,0 +1,30 @@
+{
+  "interaction (reference)": {
+    "positive_rate": 0.433,
+    "Random": 0.51,
+    "Heuristic": 0.818,
+    "LogReg": 0.824,
+    "RandomForest": 0.812
+  },
+  "linear-additive": {
+    "positive_rate": 0.537,
+    "Random": 0.507,
+    "Heuristic": 0.766,
+    "LogReg": 0.774,
+    "RandomForest": 0.76
+  },
+  "threshold / rule-like": {
+    "positive_rate": 0.365,
+    "Random": 0.524,
+    "Heuristic": 0.747,
+    "LogReg": 0.772,
+    "RandomForest": 0.835
+  },
+  "structure-emphasis": {
+    "positive_rate": 0.596,
+    "Random": 0.511,
+    "Heuristic": 0.758,
+    "LogReg": 0.8,
+    "RandomForest": 0.778
+  }
+}

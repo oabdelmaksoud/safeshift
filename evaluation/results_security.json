@@ -1,0 +1,188 @@
+{
+  "architecture": "Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative)",
+  "n_components": 14,
+  "n_interfaces": 19,
+  "external_entry_points": [
+    "ivi",
+    "ota",
+    "tcu",
+    "v2x"
+  ],
+  "n_externally_reachable_interfaces": 15,
+  "n_high": 12,
+  "n_high_and_externally_reachable": 10,
+  "top10_externally_reachable": 8,
+  "rows": [
+    {
+      "rank": 1,
+      "id": "if_cam_fusion",
+      "from": "cam",
+      "to": "fusion",
+      "risk": 0.92,
+      "band": "HIGH",
+      "externally_reachable": false
+    },
+    {
+      "rank": 2,
+      "id": "if_radar_fusion",
+      "from": "radar",
+      "to": "fusion",
+      "risk": 0.9,
+      "band": "HIGH",
+      "externally_reachable": false
+    },
+    {
+      "rank": 3,
+      "id": "if_v2x_cgw",
+      "from": "v2x",
+      "to": "cgw",
+      "risk": 0.89,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 4,
+      "id": "if_fusion_adas",
+      "from": "fusion",
+      "to": "adas_dc",
+      "risk": 0.84,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 5,
+      "id": "if_cgw_adas",
+      "from": "cgw",
+      "to": "adas_dc",
+      "risk": 0.83,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 6,
+      "id": "if_adas_fusion",
+      "from": "adas_dc",
+      "to": "fusion",
+      "risk": 0.81,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 7,
+      "id": "if_ota_adas",
+      "from": "ota",
+      "to": "adas_dc",
+      "risk": 0.81,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 8,
+      "id": "if_vcu_brake",
+      "from": "vcu",
+      "to": "brake",
+      "risk": 0.74,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 9,
+      "id": "if_ota_vcu",
+      "from": "ota",
+      "to": "vcu",
+      "risk": 0.74,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 10,
+      "id": "if_adas_brake",
+      "from": "adas_dc",
+      "to": "brake",
+      "risk": 0.73,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 11,
+      "id": "if_adas_steer",
+      "from": "adas_dc",
+      "to": "steer",
+      "risk": 0.72,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 12,
+      "id": "if_cgw_vcu",
+      "from": "cgw",
+      "to": "vcu",
+      "risk": 0.72,
+      "band": "HIGH",
+      "externally_reachable": true
+    },
+    {
+      "rank": 13,
+      "id": "if_hsm_cgw",
+      "from": "hsm",
+      "to": "cgw",
+      "risk": 0.58,
+      "band": "MEDIUM",
+      "externally_reachable": false
+    },
+    {
+      "rank": 14,
+      "id": "if_ivi_cgw",
+      "from": "ivi",
+      "to": "cgw",
+      "risk": 0.56,
+      "band": "MEDIUM",
+      "externally_reachable": true
+    },
+    {
+      "rank": 15,
+      "id": "if_tcu_cgw",
+      "from": "tcu",
+      "to": "cgw",
+      "risk": 0.56,
+      "band": "MEDIUM",
+      "externally_reachable": true
+    },
+    {
+      "rank": 16,
+      "id": "if_cgw_ivi",
+      "from": "cgw",
+      "to": "ivi",
+      "risk": 0.5,
+      "band": "MEDIUM",
+      "externally_reachable": true
+    },
+    {
+      "rank": 17,
+      "id": "if_ota_cgw",
+      "from": "ota",
+      "to": "cgw",
+      "risk": 0.39,
+      "band": "MEDIUM",
+      "externally_reachable": true
+    },
+    {
+      "rank": 18,
+      "id": "if_cgw_bcm",
+      "from": "cgw",
+      "to": "bcm",
+      "risk": 0.21,
+      "band": "LOW",
+      "externally_reachable": true
+    },
+    {
+      "rank": 19,
+      "id": "if_hsm_ota",
+      "from": "hsm",
+      "to": "ota",
+      "risk": 0.15,
+      "band": "LOW",
+      "externally_reachable": false
+    }
+  ]
+}
