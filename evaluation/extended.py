@@ -75,15 +75,48 @@ def security() -> dict:
     high = [r for r in rows if r["band"] == "HIGH"]
     ext_if = [r for r in rows if r["externally_reachable"]]
     top10 = rows[:10]
+    obs_high_reach = sum(1 for r in high if r["externally_reachable"])
+    obs_top10_reach = sum(1 for r in top10 if r["externally_reachable"])
+
+    # --- base-rate / chance analysis -------------------------------------------------------
+    # Most interfaces in a connected-vehicle design are reachable from an off-board entry point,
+    # so a high *count* of reachable hotspots is expected by the base rate alone. We therefore
+    # test whether the overlap EXCEEDS chance, and whether risk scores actually rank higher on
+    # reachable interfaces, rather than reporting the raw overlap as if it were a finding.
+    from scipy.stats import hypergeom, mannwhitneyu
+    base_rate = len(ext_if) / n_if
+    exp_high_reach = base_rate * len(high)
+    exp_top10_reach = base_rate * len(top10)
+    # P(X >= observed) drawing len(high) interfaces from n_if of which len(ext_if) are reachable
+    p_high = float(hypergeom.sf(obs_high_reach - 1, n_if, len(ext_if), len(high))) if high else None
+    p_top10 = float(hypergeom.sf(obs_top10_reach - 1, n_if, len(ext_if), len(top10)))
+    # does risk rank higher on reachable interfaces? (Mann-Whitney, one-sided 'greater')
+    risk_reach = [r["risk"] for r in rows if r["externally_reachable"]]
+    risk_non = [r["risk"] for r in rows if not r["externally_reachable"]]
+    if risk_reach and risk_non:
+        u, p_rank = mannwhitneyu(risk_reach, risk_non, alternative="greater")
+        rank_auc = float(u) / (len(risk_reach) * len(risk_non))
+    else:
+        p_rank, rank_auc = None, None
+
     res = {
         "architecture": arch.name,
         "n_components": len(arch.components),
         "n_interfaces": n_if,
         "external_entry_points": sorted(EXTERNAL_ENTRY),
         "n_externally_reachable_interfaces": len(ext_if),
+        "base_rate_reachable": round(base_rate, 3),
         "n_high": len(high),
-        "n_high_and_externally_reachable": sum(1 for r in high if r["externally_reachable"]),
-        "top10_externally_reachable": sum(1 for r in top10 if r["externally_reachable"]),
+        "n_high_and_externally_reachable": obs_high_reach,
+        "expected_high_reachable_by_base_rate": round(exp_high_reach, 2),
+        "hypergeom_p_high_ge_observed": p_high,
+        "top10_externally_reachable": obs_top10_reach,
+        "expected_top10_reachable_by_base_rate": round(exp_top10_reach, 2),
+        "hypergeom_p_top10_ge_observed": p_top10,
+        "mean_risk_reachable": round(float(np.mean(risk_reach)), 3) if risk_reach else None,
+        "mean_risk_non_reachable": round(float(np.mean(risk_non)), 3) if risk_non else None,
+        "rank_test_p_reachable_gt_non": (round(float(p_rank), 3) if p_rank is not None else None),
+        "rank_test_auc": (round(rank_auc, 3) if rank_auc is not None else None),
         "rows": rows,
     }
 
@@ -91,21 +124,31 @@ def security() -> dict:
          f"- Architecture: {arch.name}",
          f"- Components: {res['n_components']} | Interfaces: {n_if}",
          f"- External entry points (off-board connectivity): {', '.join(sorted(EXTERNAL_ENTRY))}",
-         f"- Externally-reachable interfaces: **{len(ext_if)} / {n_if}**",
-         f"- HIGH-risk interfaces: **{len(high)}**; of those, externally reachable: "
-         f"**{res['n_high_and_externally_reachable']} / {len(high)}**",
-         f"- Of the top-10 integration-risk hotspots, externally reachable: "
-         f"**{res['top10_externally_reachable']} / 10**\n",
-         "| Rank | Interface | From → To | Risk | Band | Externally reachable (R155 surface) |",
+         f"- Externally-reachable interfaces: **{len(ext_if)} / {n_if}** "
+         f"(base rate **{base_rate:.0%}** of all interfaces)",
+         (f"- HIGH-risk & externally reachable: **{obs_high_reach} / {len(high)}** "
+          f"(chance expectation **{exp_high_reach:.1f}**; hypergeometric P(>={obs_high_reach}) = "
+          f"**{p_high:.2f}**)") if high else "- (no HIGH interfaces)",
+         f"- Top-10 hotspots externally reachable: **{obs_top10_reach} / 10** "
+         f"(chance expectation **{exp_top10_reach:.1f}**; P(>={obs_top10_reach}) = **{p_top10:.2f}**)",
+         f"- Mean risk on reachable vs non-reachable interfaces: "
+         f"**{res['mean_risk_reachable']} vs {res['mean_risk_non_reachable']}** "
+         f"(Mann-Whitney one-sided p = **{res['rank_test_p_reachable_gt_non']}**)\n",
+         "| Rank | Interface | From -> To | Risk | Band | Externally reachable (R155 surface) |",
          "|-----:|-----------|-----------|-----:|------|:--:|"]
     for r in rows:
-        L.append(f"| {r['rank']} | {r['id']} | {r['from']} → {r['to']} | {r['risk']:.2f} "
+        L.append(f"| {r['rank']} | {r['id']} | {r['from']} -> {r['to']} | {r['risk']:.2f} "
                  f"| {r['band']} | {'yes' if r['externally_reachable'] else 'no'} |")
-    L.append("\n_An interface is 'externally reachable' if its source component is reachable, "
-             "in the directed dependency graph, from an off-board connectivity entry point. "
-             "These are the interfaces on the cyber attack-propagation surface that UNECE R155/R156 "
-             "and ISO-SAE 21434 govern. The overlap with SafeShift's integration-risk hotspots is "
-             "the point: the same interfaces concentrate integration risk and security exposure._")
+    L.append("\n_An interface is 'externally reachable' if its source component is reachable, in the "
+             "directed dependency graph, from an off-board connectivity entry point (the cyber "
+             "attack-propagation surface UNECE R155/R156 and ISO/SAE 21434 govern). Because most "
+             "interfaces in this connected design are reachable, the high-risk interfaces are reachable "
+             "at roughly the base rate (overlap not above chance), and the two highest-risk interfaces "
+             "-- raw camera/radar inputs to fusion -- are NOT externally reachable. The honest reading: "
+             "a single design-time pass *enumerates* the externally-reachable surface alongside "
+             "integration risk, so one analysis feeds both the integration plan and the ISO/SAE 21434 "
+             "TARA -- but it does not selectively concentrate risk on that surface in this hand-designed "
+             "example._")
     _write("results_security", res, "\n".join(L))
     return res
 
@@ -203,35 +246,65 @@ _GTS = {"interaction (reference)": _gt_interaction, "linear-additive": _gt_linea
         "threshold / rule-like": _gt_threshold, "structure-emphasis": _gt_structure}
 
 
-def robustness() -> dict:
+def _gt_confounder(X, hidden, beta):  # off-feature latent driver: part of the risk comes from a
+    f = _f(X)                          # hidden factor the models never observe (team experience,
+    feat = (1.0 * f["safety_related"] + 0.8 * f["protocol_mismatch_risk"]   # tooling, schedule...),
+            + 0.6 * f["supplier_boundary"] + 0.5 * f["timing_critical"]      # so recovery is bounded
+            - 0.5 * f["min_maturity"])                                       # below the aligned ceiling.
+    return -2.4 + feat + beta * hidden
+
+
+def _fit_eval(X, y, rng):
+    """Train heuristic/LogReg/RF on a 70% split and return held-out ROC-AUC for each + random."""
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import roc_auc_score
-    rng = np.random.default_rng(SEED)
-    X = S.sample_features(8000, np.random.default_rng(SEED))
-    out = {}
-    for gt_name, gt in _GTS.items():
-        p = 1.0 / (1.0 + np.exp(-gt(X)))
-        y = (np.random.default_rng(7).random(len(p)) < p).astype(int)
-        Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.30, random_state=SEED, stratify=y)
-        heur = np.array([heuristic_score({FN[i]: r[i] for i in range(len(FN))}) for r in Xte])
-        lr = LogisticRegression(max_iter=1000).fit(Xtr, ytr).predict_proba(Xte)[:, 1]
-        rf = RandomForestClassifier(n_estimators=300, max_depth=10, random_state=SEED)\
-            .fit(Xtr, ytr).predict_proba(Xte)[:, 1]
-        rnd = rng.random(len(yte))
-        out[gt_name] = {
-            "positive_rate": round(float(y.mean()), 3),
+    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.30, random_state=SEED, stratify=y)
+    heur = np.array([heuristic_score({FN[i]: r[i] for i in range(len(FN))}) for r in Xte])
+    lr = LogisticRegression(max_iter=1000).fit(Xtr, ytr).predict_proba(Xte)[:, 1]
+    rf = RandomForestClassifier(n_estimators=300, max_depth=10, random_state=SEED)\
+        .fit(Xtr, ytr).predict_proba(Xte)[:, 1]
+    rnd = rng.random(len(yte))
+    return {"positive_rate": round(float(y.mean()), 3),
             "Random": round(float(roc_auc_score(yte, rnd)), 3),
             "Heuristic": round(float(roc_auc_score(yte, heur)), 3),
             "LogReg": round(float(roc_auc_score(yte, lr)), 3),
-            "RandomForest": round(float(roc_auc_score(yte, rf)), 3),
-        }
-    L = ["# SafeShift — Robustness across independent, aligned ground truths\n",
-         "Each column is a *different* latent risk function (independent of SafeShift's scorer). "
-         "All are plausible, aligned risk models. The point: informed models beat the random "
-         "baseline across every generator, so the headline result is not an artifact of one "
-         "chosen synthetic target.\n",
+            "RandomForest": round(float(roc_auc_score(yte, rf)), 3)}
+
+
+def robustness() -> dict:
+    rng = np.random.default_rng(SEED)
+    X = S.sample_features(8000, np.random.default_rng(SEED))
+    out = {}
+    # (a) Four ALIGNED generators: each is a different functional form (linear, interaction,
+    #     threshold, structure) over the SAME features with the SAME signs as the scorer. They
+    #     test robustness to functional form/coefficients -- NOT to feature directions -- so they
+    #     cannot, by construction, detect sign-alignment circularity.
+    for gt_name, gt in _GTS.items():
+        p = 1.0 / (1.0 + np.exp(-gt(X)))
+        y = (np.random.default_rng(7).random(len(p)) < p).astype(int)
+        out[gt_name] = _fit_eval(X, y, rng)
+    # (b) One OFF-FEATURE generator: ~half the systematic risk comes from a latent factor the
+    #     models never see. This is the genuinely harder, more independent test; performance drops
+    #     toward (but stays above) chance, bounding what the synthetic study can claim when real
+    #     risk has drivers outside the feature set.
+    hidden = np.random.default_rng(101).standard_normal(len(X))
+    feat_only = _gt_confounder(X, np.zeros(len(X)), 0.0)   # logit with no hidden contribution
+    beta = float(np.std(feat_only))                        # hidden ~ half the systematic variance
+    p = 1.0 / (1.0 + np.exp(-_gt_confounder(X, hidden, beta)))
+    y = (np.random.default_rng(7).random(len(p)) < p).astype(int)
+    out["off-feature latent driver"] = _fit_eval(X, y, rng)
+
+    L = ["# SafeShift — Robustness across alternative ground truths\n",
+         "The first four rows are *aligned* latent risk functions: each is a different functional "
+         "form (linear, interaction, threshold, structure-emphasis) over the SAME engineering "
+         "features with the SAME signs as SafeShift's scorer. They test robustness to functional "
+         "form and coefficients -- not to the choice of feature directions -- so informed models are "
+         "expected to do well, and these rows do NOT establish independence from the scorer's "
+         "assumptions. The final row, 'off-feature latent driver', is the genuinely harder test: "
+         "about half the systematic risk comes from a hidden factor the models never observe, so "
+         "performance drops toward chance, bounding what the synthetic study can claim.\n",
          "| Ground truth | pos. rate | Random | Heuristic | LogReg | RandomForest |",
          "|--------------|----------:|-------:|----------:|-------:|-------------:|"]
     for gt, m in out.items():
@@ -244,9 +317,12 @@ def robustness() -> dict:
 # --------------------------------------------------------------------------------------
 # 4) Scalability: analysis runtime vs architecture size
 # --------------------------------------------------------------------------------------
-def _synth_arch(n_comp: int, seed: int) -> Architecture:
-    """Layered, sparse, mostly feed-forward architecture with a few back-edges (realistic
-    E/E sparsity; bounded cycle structure)."""
+def _synth_arch(n_comp: int, seed: int, back_edge_p: float = 0.03,
+                cyclic: bool = False) -> Architecture:
+    """Layered, sparse, mostly feed-forward architecture with back-edges (realistic E/E sparsity).
+    Defaults (back_edge_p=0.03, cyclic=False) reproduce the near-acyclic sweep exactly. Set
+    cyclic=True with a higher back_edge_p to inject real directed cycles (back-edges to any earlier
+    layer) for the cyclic stress test."""
     rng = np.random.default_rng(seed)
     n_layers = max(4, int(np.sqrt(n_comp)))
     layer = {i: int(rng.integers(0, n_layers)) for i in range(n_comp)}
@@ -268,10 +344,13 @@ def _synth_arch(n_comp: int, seed: int) -> Architecture:
                                   safety_related=bool(rng.integers(0, 2)),
                                   timing_critical=bool(rng.integers(0, 2))))
             eid += 1
-    # a few short back-edges (to the immediately previous layer) to introduce bounded cycles
+    # back-edges introduce directed cycles. Default: a few short edges to the immediately
+    # previous layer (bounded). cyclic=True: edges to any earlier layer at rate back_edge_p,
+    # producing genuine multi-node cycles for the stress test.
     for i in range(n_comp):
-        if rng.random() < 0.03:
-            prev = [t for t in range(n_comp) if layer[t] == layer[i] - 1]
+        if rng.random() < back_edge_p:
+            prev = ([t for t in range(n_comp) if layer[t] < layer[i]] if cyclic
+                    else [t for t in range(n_comp) if layer[t] == layer[i] - 1])
             if prev:
                 t = int(rng.choice(prev))
                 itfs.append(Interface(id=f"e{eid}", source=f"c{i}", target=f"c{t}",
@@ -293,6 +372,21 @@ def scalability(sizes=(20, 50, 100, 200, 500), repeats: int = 3) -> dict:
         rows.append({"components": n, "interfaces": len(arch.interfaces),
                      "median_seconds": round(float(np.median(ts)), 4)})
     res = {"rows": rows, "repeats": repeats}
+    # Cyclic stress test: largest size but dense back-edges to any earlier layer -> genuine
+    # multi-node directed cycles. With SCC-based membership (O(V+E)) this stays fast, empirically
+    # retiring the former "bounding cycle enumeration is future work" caveat.
+    big = _synth_arch(500, seed=SEED + 500, back_edge_p=0.15, cyclic=True)
+    gbig = nx.DiGraph(build_dependency_graph(big))
+    cyc_nodes = sum(len(s) for s in nx.strongly_connected_components(gbig) if len(s) > 1)
+    tsc = []
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        feats = extract_interface_features(big)
+        _ = [heuristic_score(f) for f in feats.values()]
+        tsc.append(time.perf_counter() - t0)
+    res["cyclic_stress"] = {"components": 500, "interfaces": len(big.interfaces),
+                            "cycle_member_nodes": int(cyc_nodes),
+                            "median_seconds": round(float(np.median(tsc)), 4)}
     plt.figure(figsize=(5.2, 4))
     xs = [r["components"] for r in rows]
     ys = [r["median_seconds"] for r in rows]
@@ -301,13 +395,21 @@ def scalability(sizes=(20, 50, 100, 200, 500), repeats: int = 3) -> dict:
     plt.title("SafeShift analysis runtime vs architecture size")
     plt.grid(True, alpha=0.3)
     plt.tight_layout(); plt.savefig(os.path.join(FIG, "scalability.png"), dpi=150); plt.close()
+    cs = res["cyclic_stress"]
     L = ["# SafeShift — Scalability (analysis runtime vs size)\n",
-         f"Median of {repeats} runs; sparse layered architectures (interfaces ~ 2.5x components).\n",
+         f"Median of {repeats} runs; sparse layered architectures (interfaces ~ 2.5x components). "
+         "The main sweep uses near-acyclic graphs (short back-edges); the cyclic stress row below "
+         "uses dense back-edges to any earlier layer to force genuine directed cycles.\n",
          "| Components | Interfaces | Median analysis time (s) |",
          "|-----------:|-----------:|-------------------------:|"]
     for r in rows:
         L.append(f"| {r['components']} | {r['interfaces']} | {r['median_seconds']:.4f} |")
-    L.append("\nFigure: `figures/scalability.png`.")
+    L.append(f"\n**Cyclic stress (SCC-based cycle membership):** {cs['components']} components, "
+             f"{cs['interfaces']} interfaces, {cs['cycle_member_nodes']} nodes on directed cycles -- "
+             f"analysed in **{cs['median_seconds']:.4f} s**. Because membership uses "
+             f"strongly-connected components (O(V+E)) rather than cycle enumeration, dense cyclic "
+             f"graphs stay fast.\n")
+    L.append("Figure: `figures/scalability.png`.")
     _write("results_scalability", res, "\n".join(L))
     return res
 

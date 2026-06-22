@@ -44,6 +44,20 @@ def threshold_metrics(y, p, t=0.5):
     return dict(precision=pr, recall=rc, f1=f1, tn=int(tn), fp=int(fp), fn=int(fn), tp=int(tp))
 
 
+def bootstrap_auc_ci(y, p, n_boot=2000, seed=SEED):
+    """Percentile bootstrap 95% CI for ROC-AUC on the held-out set."""
+    rng = np.random.default_rng(seed)
+    y = np.asarray(y); p = np.asarray(p); n = len(y)
+    aucs = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, n)
+        if len(np.unique(y[idx])) < 2:
+            continue
+        aucs.append(roc_auc_score(y[idx], p[idx]))
+    lo, hi = np.percentile(aucs, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
 def evaluate_all():
     rng = np.random.default_rng(SEED)
     X, y = S.make_dataset(n=8000, seed=SEED)
@@ -54,6 +68,11 @@ def evaluate_all():
     # models -> test probabilities
     proba = {}
     proba["Random"] = rng.random(len(yte))
+    # Informed-but-trivial baselines: a fair floor above pure chance, so the marginal value of
+    # the full 10-feature model is visible (a single dominant rule already captures much signal).
+    si, mi = FN.index("safety_related"), FN.index("min_maturity")
+    proba["Safety-only (1 rule)"] = Xte[:, si].astype(float)
+    proba["Safety x immaturity (2 rule)"] = Xte[:, si] * (1.0 - Xte[:, mi])
     proba["Heuristic (linear)"] = heuristic_proba(Xte)
     lr = LogisticRegression(max_iter=1000).fit(Xtr, ytr)
     proba["Logistic Regression"] = lr.predict_proba(Xte)[:, 1]
@@ -62,7 +81,9 @@ def evaluate_all():
 
     metrics = {}
     for name, p in proba.items():
+        lo, hi = bootstrap_auc_ci(yte, p)
         m = {"roc_auc": float(roc_auc_score(yte, p)),
+             "roc_auc_ci95": [round(lo, 3), round(hi, 3)],
              "pr_auc": float(average_precision_score(yte, p)),
              "brier": float(brier_score_loss(yte, np.clip(p, 0, 1)))}
         m.update(threshold_metrics(yte, p))
@@ -78,6 +99,24 @@ def evaluate_all():
     results["rf_cv_auc_mean"] = float(np.mean(aucs))
     results["rf_cv_auc_std"] = float(np.std(aucs))
     results["rf_cv_auc_folds"] = [round(float(a), 4) for a in aucs]
+
+    # Circularity diagnostic: the heuristic's discrimination is the agreement between its feature
+    # signs and the synthetic target's. Flipping every heuristic weight reverses its ranking, so
+    # its ROC-AUC inverts to ~1 - AUC. Reported to make explicit that this synthetic study measures
+    # recovery of a target built from the same features and signs -- construct recovery, not
+    # predictive validity on real integration outcomes.
+    from safeshift.model import _W as _HW, _BIAS as _HB
+    def _sig(x):
+        return 1.0 / (1.0 + np.exp(-x))
+    flip = np.array([_sig(_HB + sum(-_HW[FN[i]] * row[i] for i in range(len(FN)))) for row in Xte])
+    results["circularity_diagnostic"] = {
+        "heuristic_auc": metrics["Heuristic (linear)"]["roc_auc"],
+        "heuristic_auc_sign_flipped": float(roc_auc_score(yte, flip)),
+        "best_single_feature_auc": metrics["Safety-only (1 rule)"]["roc_auc"],
+        "note": ("Flipping the heuristic's feature signs inverts its ROC-AUC, confirming that "
+                 "discrimination on this synthetic target reflects agreement between the scorer's "
+                 "feature signs and the generator's -- construct recovery, not real-world validity."),
+    }
 
     # ablation by feature group (zero out group, retrain RF)
     full_auc = metrics["Random Forest"]["roc_auc"]
@@ -131,13 +170,21 @@ def write_markdown(r):
     L.append(f"- Dataset: {r['n_total']} synthetic interfaces (independent non-linear ground truth); "
              f"test set {r['n_test']}; positive rate {r['positive_rate']:.2f}.\n")
     L.append("## Held-out performance (30% test set)\n")
-    L.append("| Model | ROC-AUC | PR-AUC | Brier | Precision | Recall | F1 |")
-    L.append("|-------|--------:|-------:|------:|----------:|-------:|---:|")
+    L.append("| Model | ROC-AUC | 95% CI (bootstrap) | PR-AUC | Brier | F1 |")
+    L.append("|-------|--------:|:------------------:|-------:|------:|---:|")
     for name, m in r["holdout_metrics"].items():
-        L.append(f"| {name} | {m['roc_auc']:.3f} | {m['pr_auc']:.3f} | {m['brier']:.3f} "
-                 f"| {m['precision']:.2f} | {m['recall']:.2f} | {m['f1']:.2f} |")
+        ci = m.get("roc_auc_ci95", [float("nan"), float("nan")])
+        L.append(f"| {name} | {m['roc_auc']:.3f} | [{ci[0]:.3f}, {ci[1]:.3f}] | {m['pr_auc']:.3f} "
+                 f"| {m['brier']:.3f} | {m['f1']:.2f} |")
     L.append(f"\n5-fold CV (Random Forest) ROC-AUC: **{r['rf_cv_auc_mean']:.3f} ± {r['rf_cv_auc_std']:.3f}** "
              f"(folds: {r['rf_cv_auc_folds']}).\n")
+    cd = r.get("circularity_diagnostic")
+    if cd:
+        L.append(f"**Circularity diagnostic.** Heuristic ROC-AUC {cd['heuristic_auc']:.3f}; with all feature "
+                 f"signs flipped it inverts to {cd['heuristic_auc_sign_flipped']:.3f}, and the best single "
+                 f"feature (safety) already reaches {cd['best_single_feature_auc']:.3f}. This synthetic study "
+                 f"measures recovery of a target built from the same features and signs as the scorer — "
+                 f"construct recovery, not predictive validity on real outcomes.\n")
     L.append("## Ablation — ROC-AUC drop when a feature group is removed (Random Forest)\n")
     L.append("| Feature group removed | ROC-AUC without | AUC drop |")
     L.append("|-----------------------|----------------:|---------:|")

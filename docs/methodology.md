@@ -10,8 +10,10 @@ SafeShift aims to surface likely integration trouble spots during *virtual* desi
 ## Approach
 1. **Describe** the architecture in an open schema: components (with supplier, ASIL, maturity)
    and interfaces (protocol, signal count, safety/timing relevance).
-2. **Build** a directed dependency graph and compute structural metrics (fan-in/out,
-   betweenness, cycle membership).
+2. **Build** a directed dependency graph and compute structural metrics: fan-in/out and cycle
+   membership (via strongly-connected components, O(V+E) — no cycle enumeration). Betweenness
+   centrality is also computed for the dependency-map visualisation, but it is not used as a
+   scoring feature.
 3. **Extract features** per interface combining structural position with engineering attributes
    known to elevate integration risk: supplier-boundary crossings, protocol complexity, high
    signal counts, safety/timing criticality, high ASIL on immature components.

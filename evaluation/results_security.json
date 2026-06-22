@@ -9,9 +9,18 @@
     "v2x"
   ],
   "n_externally_reachable_interfaces": 15,
+  "base_rate_reachable": 0.789,
   "n_high": 12,
   "n_high_and_externally_reachable": 10,
+  "expected_high_reachable_by_base_rate": 9.47,
+  "hypergeom_p_high_ge_observed": 0.4749742002063984,
   "top10_externally_reachable": 8,
+  "expected_top10_reachable_by_base_rate": 7.89,
+  "hypergeom_p_top10_ge_observed": 0.6671826625386996,
+  "mean_risk_reachable": 0.67,
+  "mean_risk_non_reachable": 0.637,
+  "rank_test_p_reachable_gt_non": 0.709,
+  "rank_test_auc": 0.417,
   "rows": [
     {
       "rank": 1,

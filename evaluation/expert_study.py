@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Analyse the SafeShift expert validation study.
 
+STATUS: forward-looking TEMPLATE — no expert data has been collected yet, and no results from
+this script appear in the paper. It is shipped ready to run so that an independent, blinded
+expert-rating study (the face-validity check the synthetic evaluation cannot provide) can be
+executed once ratings exist. Running it without an input CSV does nothing; see §8 (calibration)
+and the README. Nothing in the paper's claims depends on this file.
+
 Reads a long-format CSV (one row per interface x expert) and computes, per
 architecture AND pooled across architectures:
 

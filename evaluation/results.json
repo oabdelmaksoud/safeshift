@@ -5,6 +5,10 @@
   "holdout_metrics": {
     "Random": {
       "roc_auc": 0.5153039695733069,
+      "roc_auc_ci95": [
+        0.491,
+        0.539
+      ],
       "pr_auc": 0.4372079590667533,
       "brier": 0.3234285844078891,
       "precision": 0.441025641025641,
@@ -15,8 +19,44 @@
       "fn": 518,
       "tp": 516
     },
+    "Safety-only (1 rule)": {
+      "roc_auc": 0.6967525792172999,
+      "roc_auc_ci95": [
+        0.679,
+        0.715
+      ],
+      "pr_auc": 0.570767700527136,
+      "brier": 0.30666666666666664,
+      "precision": 0.6247906197654941,
+      "recall": 0.7214700193423598,
+      "f1": 0.6696588868940754,
+      "tn": 918,
+      "fp": 448,
+      "fn": 288,
+      "tp": 746
+    },
+    "Safety x immaturity (2 rule)": {
+      "roc_auc": 0.7147313451011155,
+      "roc_auc_ci95": [
+        0.695,
+        0.734
+      ],
+      "pr_auc": 0.6041297881494576,
+      "brier": 0.26848146310841825,
+      "precision": 0.68,
+      "recall": 0.3781431334622824,
+      "f1": 0.4860161591050342,
+      "tn": 1182,
+      "fp": 184,
+      "fn": 643,
+      "tp": 391
+    },
     "Heuristic (linear)": {
       "roc_auc": 0.8062323178830453,
+      "roc_auc_ci95": [
+        0.789,
+        0.823
+      ],
       "pr_auc": 0.7559304460267413,
       "brier": 0.19789475501117101,
       "precision": 0.6041958041958042,
@@ -29,6 +69,10 @@
     },
     "Logistic Regression": {
       "roc_auc": 0.811963518553656,
+      "roc_auc_ci95": [
+        0.794,
+        0.828
+      ],
       "pr_auc": 0.7586843016185825,
       "brier": 0.17418728923832477,
       "precision": 0.7254901960784313,
@@ -41,6 +85,10 @@
     },
     "Random Forest": {
       "roc_auc": 0.8030782105343646,
+      "roc_auc_ci95": [
+        0.785,
+        0.82
+      ],
       "pr_auc": 0.748570721527119,
       "brier": 0.17843277074572195,
       "precision": 0.7009249743062693,
@@ -61,6 +109,12 @@
     0.8039,
     0.8163
   ],
+  "circularity_diagnostic": {
+    "heuristic_auc": 0.8062323178830453,
+    "heuristic_auc_sign_flipped": 0.19376768211695472,
+    "best_single_feature_auc": 0.6967525792172999,
+    "note": "Flipping the heuristic's feature signs inverts its ROC-AUC, confirming that discrimination on this synthetic target reflects agreement between the scorer's feature signs and the generator's -- construct recovery, not real-world validity."
+  },
   "ablation": {
     "safety/ASIL": {
       "auc_without": 0.6449919430434057,

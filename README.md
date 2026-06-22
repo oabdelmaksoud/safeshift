@@ -19,8 +19,9 @@ fund bespoke tooling — can adopt a common, auditable approach to early validat
 ## What it does
 - Reads an open **JSON/YAML schema** describing components (supplier, ASIL, maturity) and
   interfaces (protocol, signals, safety/timing relevance).
-- Builds a **dependency graph** and computes structural risk metrics (fan-in/out, betweenness,
-  dependency cycles).
+- Builds a **dependency graph** and computes structural risk metrics (fan-in/out and
+  cycle membership via strongly-connected components; betweenness is computed for the
+  dependency-map visualisation but is not a scoring feature).
 - Scores each interface for **integration-defect likelihood** using either a transparent,
   explainable **heuristic** or an optional **machine-learning** model (RandomForest).
 - Emits a ranked **risk report** with plain-language reasons to focus early review.
@@ -73,21 +74,29 @@ See [`docs/methodology.md`](docs/methodology.md) and [`docs/schema.md`](docs/sch
 
 ## Evaluation
 
-**Core (held-out, independent synthetic ground truth).** Against a *non-linear synthetic ground
-truth distinct from SafeShift's own heuristic* (to avoid circular evaluation), informed models reach
-~0.81 ROC-AUC versus ~0.52 for a random baseline; 5-fold cross-validation is stable at
-0.810 ± 0.006. The transparent heuristic (0.806) is competitive with logistic regression (0.812)
-and a random forest (0.803), supporting the use of the explainable model in safety contexts. An
-ablation shows the safety/ASIL feature group contributes most (ROC-AUC drops 0.158 when removed).
+**Core (held-out synthetic benchmark).** Labels come from a *latent, non-linear risk function
+distinct from SafeShift's own heuristic*. Informed models recover the target at ~0.81 ROC-AUC —
+above a random baseline (0.52) **and** an informed single-rule baseline (0.70) — with 5-fold
+cross-validation stable at 0.810 ± 0.006. The transparent heuristic (0.806, 95% CI [0.79, 0.82]) is
+statistically indistinguishable from logistic regression (0.812) and a random forest (0.803),
+supporting the explainable model in safety contexts. An ablation shows the safety/ASIL group
+contributes most (ROC-AUC drops 0.158 when removed). **This measures construct recovery, not
+predictive validity:** the benchmark shares the scorer's features and signs, so flipping the
+heuristic's signs inverts its AUC to 0.19, and a latent driver *outside* the feature set lowers
+informed performance to ~0.63–0.67.
 
-**Extended (v0.2.0).**
-- **Robustness** — the ranking holds across *four independent* ground-truth generators, not a single
-  synthetic target.
-- **Scalability** — a 500-component / 956-interface architecture is analyzed in ~39 ms.
-- **Standards overlap** — on the connected-vehicle example, 10 of the 12 HIGH-risk interfaces (and 8
-  of the top-10 hotspots) lie on the externally-reachable attack surface that UNECE R155/R156 and
-  ISO/SAE 21434 govern — i.e., design-stage integration risk and cybersecurity exposure concentrate
-  on the same interfaces.
+**Extended (v0.3.0).**
+- **Robustness** — the ranking holds across *four alternative functional forms* of the risk function
+  (all sharing the scorer's features and signs); an *off-feature latent-driver* stress test drops
+  informed models to ~0.63–0.67, honestly bounding what the synthetic study establishes.
+- **Scalability** — a 500-component / 956-interface architecture is analyzed in ~36 ms; with
+  SCC-based cycle detection, a densely cyclic 500-component graph (128 nodes on directed cycles) is
+  analyzed in ~0.1 s.
+- **Standards overlap** — on the connected-vehicle example a single design-time pass *enumerates* the
+  externally-reachable attack surface (UNECE R155/R156, ISO/SAE 21434) alongside integration risk.
+  Most interfaces (15/19) are reachable, so high-risk interfaces fall on that surface at the base
+  rate (10/12; hypergeometric P≈0.5), **not** above it — a workflow convenience (one pass, two work
+  products), not a correlation.
 
 Reproduce:
 ```bash

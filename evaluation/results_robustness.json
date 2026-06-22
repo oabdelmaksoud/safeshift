@@ -26,5 +26,12 @@
     "Heuristic": 0.758,
     "LogReg": 0.8,
     "RandomForest": 0.778
+  },
+  "off-feature latent driver": {
+    "positive_rate": 0.262,
+    "Random": 0.506,
+    "Heuristic": 0.631,
+    "LogReg": 0.667,
+    "RandomForest": 0.656
   }
 }

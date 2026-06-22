@@ -3,28 +3,34 @@
     {
       "components": 20,
       "interfaces": 33,
-      "median_seconds": 0.0006
+      "median_seconds": 0.0004
     },
     {
       "components": 50,
       "interfaces": 83,
-      "median_seconds": 0.0013
+      "median_seconds": 0.0011
     },
     {
       "components": 100,
       "interfaces": 187,
-      "median_seconds": 0.0035
+      "median_seconds": 0.003
     },
     {
       "components": 200,
       "interfaces": 366,
-      "median_seconds": 0.0089
+      "median_seconds": 0.0083
     },
     {
       "components": 500,
       "interfaces": 956,
-      "median_seconds": 0.0394
+      "median_seconds": 0.0366
     }
   ],
-  "repeats": 3
+  "repeats": 3,
+  "cyclic_stress": {
+    "components": 500,
+    "interfaces": 1026,
+    "cycle_member_nodes": 128,
+    "median_seconds": 0.1132
+  }
 }

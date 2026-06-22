@@ -29,11 +29,18 @@ def structural_metrics(g: nx.MultiDiGraph) -> dict[str, dict[str, float]]:
         betw = nx.betweenness_centrality(simple) if simple.number_of_nodes() > 2 else {}
     except Exception:
         betw = {}
-    # components that participate in any directed cycle
+    # Components that participate in any directed cycle. We need cycle *membership* (a boolean),
+    # not an enumeration of cycles, so we use strongly-connected components (Tarjan, O(V+E))
+    # rather than nx.simple_cycles, which enumerates every simple cycle and is exponential in
+    # the worst case. A node lies on a directed cycle iff its SCC has more than one node, or it
+    # carries a self-loop. This yields membership identical to a full cycle enumeration while
+    # remaining linear even on dense or deeply cyclic graphs.
     in_cycle: set[str] = set()
     try:
-        for cycle in nx.simple_cycles(simple):
-            in_cycle.update(cycle)
+        for scc in nx.strongly_connected_components(simple):
+            if len(scc) > 1:
+                in_cycle.update(scc)
+        in_cycle.update(n for n in simple.nodes() if simple.has_edge(n, n))
     except Exception:
         pass
     for n in g.nodes():
