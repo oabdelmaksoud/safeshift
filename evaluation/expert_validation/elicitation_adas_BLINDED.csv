@@ -1,0 +1,13 @@
+architecture,interface,from,to,protocol,signals,safety_related,timing_critical,your_band(HIGH/MEDIUM/LOW),your_score_0_10(optional)
+Reference ADAS / E-E Architecture (illustrative),if_cam_vpm,cam_front,vpm,Ethernet,18,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_vpm_fusion,vpm,fusion,Ethernet,24,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_rf_fusion,radar_front,fusion,CAN-FD,12,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_rc_fusion,radar_corner,fusion,CAN-FD,16,true,false,,
+Reference ADAS / E-E Architecture (illustrative),if_fusion_adc,fusion,adc,Ethernet,30,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_adc_fusion,adc,fusion,Ethernet,8,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_adc_brake,adc,brake,FlexRay,10,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_adc_steer,adc,steer,FlexRay,10,true,true,,
+Reference ADAS / E-E Architecture (illustrative),if_pam_adc,pam,adc,CAN,6,false,false,,
+Reference ADAS / E-E Architecture (illustrative),if_adc_gw,adc,gw,Ethernet,20,false,false,,
+Reference ADAS / E-E Architecture (illustrative),if_gw_hmi,gw,hmi,CAN,14,false,false,,
+Reference ADAS / E-E Architecture (illustrative),if_adc_hmi,adc,hmi,CAN,9,false,false,,

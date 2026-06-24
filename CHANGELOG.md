@@ -3,6 +3,36 @@
 All notable changes to SafeShift are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-06-22 — graph-relational model (RiskGNN)
+
+Adds a topology-aware model and an honest study of *when* it helps. Intellectual honesty remained the
+governing constraint: the new evaluation is gated on being run and reported correctly, not on the GNN
+winning, and ships with a built-in negative control.
+
+### Added
+- **`RiskGNN`** (`src/safeshift/gnn.py`): a compact, pure-NumPy directed graph neural network (two
+  message-passing layers with separate in/out mean aggregation, edge-readout MLP). No new
+  dependencies. Hand-derived gradients are verified against finite differences; training is
+  full-batch AdamW with validation-based early stopping. Exported from the package and exposed via
+  `safeshift analyze --gnn` (synthetic-trained — research/demo, not calibrated).
+- **Propagating synthetic generator** (`src/safeshift/graph_synth.py`): architectures whose
+  integration risk cascades multi-hop with strength α, where α=0 is a clean negative control (the
+  label becomes a pure function of the standard per-interface features).
+- **Dose-response evaluation** (`evaluation/graph_eval.py`, writes `results_graph.md/.json`,
+  `figures/graph_eval.png`): 5-seed comparison of heuristic / RandomForest / RiskGNN / Bayes-ceiling
+  across α. The RiskGNN−RandomForest ROC-AUC gap is +0.009 at the α=0 control and grows monotonically
+  to +0.069 at α=0.9; per-interface models decline as risk propagates while only RiskGNN tracks the
+  rising Bayes-optimal ceiling. **Synthetic / construct-level evidence** — it shows when a
+  topology-aware model is warranted, not real-world superiority.
+- Tests: finite-difference gradient check, loss-decrease, prediction-range, learning-sanity, and
+  feature/label-separation (`tests/test_gnn.py`, `tests/test_graph_synth.py`).
+
+### Changed
+- `generate_report` accepts pre-computed `scores` / `mode_label` (so the graph model can produce a
+  report). Version unified to 0.4.0 across `pyproject.toml` and `__init__` (the latter had lagged at
+  0.2.0). The frozen v0.3.0 evaluation artifacts (`results.md/json`, `figures/roc.png`,
+  `figures/feature_importance.png`) are untouched.
+
 ## [0.3.0] — 2026-06-22 — evaluation hardening
 
 This release responds to an adversarial methodological self-review of the evaluation (§3, §5, §6

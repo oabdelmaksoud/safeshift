@@ -1,0 +1,13 @@
+architecture,interface,safeshift_score,safeshift_band
+Reference ADAS / E-E Architecture (illustrative),if_vpm_fusion,0.9627,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_rf_fusion,0.9410,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_adc_fusion,0.9302,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_fusion_adc,0.9248,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_adc_brake,0.8744,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_adc_steer,0.8744,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_rc_fusion,0.8594,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_cam_vpm,0.7191,HIGH
+Reference ADAS / E-E Architecture (illustrative),if_pam_adc,0.4775,MEDIUM
+Reference ADAS / E-E Architecture (illustrative),if_adc_gw,0.3917,MEDIUM
+Reference ADAS / E-E Architecture (illustrative),if_adc_hmi,0.2973,LOW
+Reference ADAS / E-E Architecture (illustrative),if_gw_hmi,0.0824,LOW

@@ -9,16 +9,24 @@ def _band(score: float) -> str:
     return "HIGH" if score >= 0.66 else ("MEDIUM" if score >= 0.33 else "LOW")
 
 
-def generate_report(arch: Architecture, model: RiskModel | None = None, top: int = 10) -> str:
-    model = model or RiskModel()
+def generate_report(arch: Architecture, model: RiskModel | None = None, top: int = 10,
+                    scores: dict | None = None, mode_label: str | None = None) -> str:
     feats = extract_interface_features(arch)
-    ranked = model.rank_interfaces(feats)
+    if scores is not None:
+        # caller supplied pre-computed per-interface scores (e.g. from the graph model RiskGNN,
+        # whose inputs are the whole graph rather than a per-interface feature vector)
+        ranked = sorted(scores.items(), key=lambda t: t[1], reverse=True)
+        mode = mode_label or "supplied-scores"
+    else:
+        model = model or RiskModel()
+        ranked = model.rank_interfaces(feats)
+        mode = model.mode
     idx = {i.id: i for i in arch.interfaces}
     lines = []
     lines.append(f"# SafeShift Risk Report — {arch.name}")
     lines.append("")
     lines.append(f"- Components: {len(arch.components)}  |  Interfaces: {len(arch.interfaces)}")
-    lines.append(f"- Model mode: **{model.mode}**")
+    lines.append(f"- Model mode: **{mode}**")
     n_high = sum(1 for _, s in ranked if s >= 0.66)
     lines.append(f"- Interfaces flagged HIGH risk: **{n_high}**")
     lines.append("")
@@ -32,6 +40,11 @@ def generate_report(arch: Architecture, model: RiskModel | None = None, top: int
                     f"| {score:.2f} | {_band(score)} |")
     lines.append("")
     lines.append("## Why these were flagged")
+    if scores is not None:
+        lines.append("")
+        lines.append("_These are interface attributes shown for context; the graph-relational "
+                    "model's score also reflects multi-hop neighbourhood structure, not only these "
+                    "local factors._")
     lines.append("")
     for iid, score in ranked[:min(5, top)]:
         f = feats[iid]

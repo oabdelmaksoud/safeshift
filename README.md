@@ -22,8 +22,9 @@ fund bespoke tooling — can adopt a common, auditable approach to early validat
 - Builds a **dependency graph** and computes structural risk metrics (fan-in/out and
   cycle membership via strongly-connected components; betweenness is computed for the
   dependency-map visualisation but is not a scoring feature).
-- Scores each interface for **integration-defect likelihood** using either a transparent,
-  explainable **heuristic** or an optional **machine-learning** model (RandomForest).
+- Scores each interface for **integration-defect likelihood** using a transparent, explainable
+  **heuristic**, an optional **machine-learning** model (RandomForest), or — experimentally — a
+  **graph-relational model (`RiskGNN`)** that captures risk *propagating* across the architecture.
 - Emits a ranked **risk report** with plain-language reasons to focus early review.
 
 ## Install
@@ -41,6 +42,9 @@ python -m safeshift analyze examples/example_adas_architecture.yaml --train --ou
 
 # A larger, connected-vehicle / software-defined-vehicle example
 python -m safeshift analyze examples/example_connected_vehicle_architecture.yaml --train --out cv_report.md
+
+# Experimental graph-relational model (RiskGNN, synthetic-trained — research/demo, not calibrated)
+python -m safeshift analyze examples/example_adas_architecture.yaml --gnn --out gnn_report.md
 ```
 
 ## Worked examples
@@ -98,11 +102,40 @@ informed performance to ~0.63–0.67.
   rate (10/12; hypergeometric P≈0.5), **not** above it — a workflow convenience (one pass, two work
   products), not a correlation.
 
+**Graph-relational extension (v0.4.0).** The heuristic and RandomForest score each interface from
+its *own* feature vector, so they are structurally blind to integration risk that **propagates**
+through the architecture — an immature, defect-prone subsystem raising the risk of interfaces several
+hops away. `RiskGNN` (a small, pure-NumPy directed graph neural network, `src/safeshift/gnn.py`,
+hand-derived gradients verified by a finite-difference check) adds message passing over the
+dependency graph. A 5-seed **dose-response** study (`evaluation/graph_eval.py`) sweeps a propagation
+strength α, with **α=0 as a built-in negative control** (no propagation; the label is a pure function
+of the standard per-interface features, so a topology-aware model can have no advantage):
+
+| α | Heuristic | RandomForest | RiskGNN | RiskGNN − RF |
+|---|----------:|-------------:|--------:|-------------:|
+| 0 (control) | 0.748 | 0.725 | 0.734 | +0.009 |
+| 0.6 | 0.748 | 0.713 | 0.751 | +0.037 |
+| 0.9 | 0.731 | 0.697 | 0.767 | +0.069 |
+
+(held-out ROC-AUC, mean over 5 seeds.) The graph model's edge over the *learned* per-interface model
+(RandomForest) is ≈0 in the control and **grows monotonically with propagation strength** — the
+signature of recovering multi-hop information no per-interface feature vector contains, not of being
+a generically stronger learner. As α rises the per-interface RandomForest and heuristic actually
+*decline* (the propagation signal is invisible noise to them) while only `RiskGNN` tracks the rising
+Bayes-optimal ceiling. In fairness, the **transparent heuristic is a strong baseline**: RiskGNN
+overtakes it only once propagation is at least moderate (α ≥ 0.6); at weak propagation the heuristic
+remains competitive. **This is synthetic, construct-level evidence:** it shows *when* a topology-aware
+model is warranted (when integration
+risk genuinely propagates), not that the GNN is superior on real outcomes — which, as for every
+result here, requires calibration on real labeled integration defects. See
+`evaluation/results_graph.md`.
+
 Reproduce:
 ```bash
 pip install -e ".[dev]"
 python evaluation/run_eval.py        # core: writes evaluation/results.md and figures/
 python evaluation/extended.py all    # extended: robustness, scalability, dependency maps, overlap
+python evaluation/graph_eval.py      # graph-relational dose-response: writes results_graph.md
 ```
 
 See `evaluation/results.md` for full tables (held-out metrics, ablation, noise robustness, feature

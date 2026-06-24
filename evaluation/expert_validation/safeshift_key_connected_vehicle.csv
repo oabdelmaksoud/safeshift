@@ -1,0 +1,20 @@
+architecture,interface,safeshift_score,safeshift_band
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_cam_fusion,0.9608,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_v2x_cgw,0.9382,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_radar_fusion,0.9382,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_fusion_adas,0.9282,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_cgw_adas,0.9234,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_adas_fusion,0.9198,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_adas_brake,0.8688,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_adas_steer,0.8629,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_cgw_vcu,0.8375,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_ota_adas,0.8115,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_vcu_brake,0.8069,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_ota_vcu,0.6748,HIGH
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_ivi_cgw,0.5200,MEDIUM
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_tcu_cgw,0.5150,MEDIUM
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_cgw_ivi,0.5025,MEDIUM
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_hsm_cgw,0.4975,MEDIUM
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_ota_cgw,0.3965,MEDIUM
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_cgw_bcm,0.1900,LOW
+Connected-Vehicle / Software-Defined-Vehicle E-E Architecture (illustrative),if_hsm_ota,0.1182,LOW
