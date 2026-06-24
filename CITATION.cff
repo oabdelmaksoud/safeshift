@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Abdelmaksoud
     given-names: Omar
-version: 0.4.0
+version: 0.5.0
 date-released: 2026-06-22
 license: Apache-2.0
 repository-code: "https://github.com/oabdelmaksoud/safeshift"

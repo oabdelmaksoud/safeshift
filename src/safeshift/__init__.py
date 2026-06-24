@@ -5,7 +5,7 @@ integration and architectural defects are most likely to arise, so they can be a
 virtual design rather than during physical prototyping. The goal is to bring "shift-left"
 validation to the software-defined vehicle in an open, reusable form.
 """
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from .schema import Architecture, Component, Interface, load_architecture
 from .graph import build_dependency_graph
