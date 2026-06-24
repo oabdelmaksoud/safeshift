@@ -3,6 +3,10 @@
 All notable changes to SafeShift are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.1] — 2026-06-24 — version/metadata alignment
+
+Patch release. Version metadata aligned to **0.5.1** across `pyproject.toml`, `src/safeshift/__init__.py`, and `CITATION.cff`. No functional code changes: the graph-relational `RiskGNN` and the v0.3.0 transparent heuristic + RandomForest defaults are unchanged. 16/16 tests.
+
 ## [0.5.0] — 2026-06-24 — graph-relational model, first public release
 
 First public release of the topology-aware **RiskGNN** and the propagating-risk evaluation (developed internally as 0.4.0; see the 0.4.0 notes below for the full detail). 16/16 tests. The transparent heuristic + RandomForest from v0.3.0 remain the default and are unchanged; the GNN is an additive, optional model. Synthetic/construct-level evidence — see README and evaluation/results_graph.md.
